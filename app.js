@@ -28,6 +28,19 @@ const findUser = (db, usernamestring, passwordstring, callback) => {
   });
 };
 
+// driver function for verifying whether new user is unique
+const verifyNewUser = (db, usernamestring, callback) => {
+  // get the document collection
+  const collection = db.collection('user-details');
+
+  // find the document
+  collection.find({username: usernamestring}).toArray((err,docs) => {
+    if (err !=  null) console.log("Error in getting data from mongoDB");
+    assert.equal(err, null);
+    callback(docs);
+  });
+};
+
 // driver function for register
 const addUser = (db, usernamestring, passwordstring, callback) => {
   const collection = db.collection('user-details');
@@ -55,16 +68,18 @@ function welcome() {
           assert.equal(null, err);
           console.log("Connected successfully to mongoDB server");
           var db = client.db(dbName);
+
           findUser(db, result.username, result.password, (docs) => {
-            if (docs.username == undefined && docs.password == undefined) {
-              console.log("User not found. Please try again.");
+            if (docs.username === undefined && docs.password === undefined) {
+              console.log("Did not find username password combination, please try again.");
               welcome();
             }
-            else if (docs.username != undefined && docs.password == undefined) {
-              console.log("User found. Logged in.")
+            else {
+              console.log("Found username password combination.");
+              console.log(docs);
             }
             client.close();
-            });
+          });
         });
       });
     }
@@ -76,9 +91,19 @@ function welcome() {
           assert.equal(null, err);
           console.log("Connected successfully to mongoDB server");
           var db = client.db(dbName); // creating global variable db
-          addUser(db, result.username, result.password, (docs) => {
-            console.log(docs);
-            client.close();
+
+          // Check if username doesn't exist, if so then register, else retry
+          verifyNewUser(db, result.username, (docs) => {
+            if (docs === []) {
+              addUser(db, result.username, result.password, (docs) => {
+                console.log(docs);
+                client.close();
+              });
+            }
+            else {
+              console.log("Username already exists. Please try again.");
+              welcome();
+            };
           });
         });
       });
