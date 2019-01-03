@@ -111,6 +111,7 @@ function welcome() {
 
     else if (result.entering === 'exit') {
       console.log("You chose to exit");
+      process.exit();
     }
 
     else welcome();
@@ -118,7 +119,3 @@ function welcome() {
 };
 
 welcome();
-
-// TODO: make it so that if the login data doesn't exist, the terminal says "not found"
-// Instead of returning objects, it returns something useful.
-// add comments to explain the code.
