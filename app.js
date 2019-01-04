@@ -94,7 +94,7 @@ function welcome() {
 
           // Check if username doesn't exist, if so then register, else retry
           verifyNewUser(db, result.username, (docs) => {
-            if (docs === []) {
+            if (docs.length === 0) {
               addUser(db, result.username, result.password, (docs) => {
                 console.log(docs);
                 client.close();
@@ -102,6 +102,7 @@ function welcome() {
             }
             else {
               console.log("Username already exists. Please try again.");
+              console.log(docs);
               welcome();
             };
           });
@@ -119,3 +120,12 @@ function welcome() {
 };
 
 welcome();
+
+
+/*
+TODO:
+new options: review hover rating
+hover: descending timestamp
+
+*/
+
