@@ -101,6 +101,7 @@ function reviewIO(docs, optionNumber) {
           const collection = db.collection(option);
           collection.insertMany([{
             username: docs[0].username,
+            creationTime: new Date(),
             review: result.review
           }], (err, submitresult) => {
             console.log("Successfully submitted review.");
