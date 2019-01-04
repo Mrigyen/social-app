@@ -5,6 +5,7 @@
 var prompt = require('prompt');
 var MongoClient = require('mongodb').MongoClient;
 var assert = require('assert');
+var internals = require('./internals');
 
 var mongodbUrl = 'mongodb://localhost:27017';
 var dbName = 'test';
@@ -70,13 +71,15 @@ function welcome() {
           var db = client.db(dbName);
 
           findUser(db, result.username, result.password, (docs) => {
-            if (docs.username === undefined && docs.password === undefined) {
+            if (docs.length === 0) {
               console.log("Did not find username password combination, please try again.");
+              console.log(docs);
               welcome();
             }
             else {
               console.log("Found username password combination.");
               console.log(docs);
+              internals.home(docs);
             }
             client.close();
           });
@@ -126,6 +129,5 @@ welcome();
 TODO:
 new options: review hover rating
 hover: descending timestamp
-
 */
 
