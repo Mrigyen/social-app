@@ -166,7 +166,34 @@ function hoverIO(docs, optionNumber) {
     process.exit();
   }
 
-  //mongodb query
+  // get average rating from mongodb and print it 
+  MongoClient.connect(mongodbUrl, (err, client) => {
+    assert.equal(null, err);
+    const db = client.db(dbName);
+
+    const findDocuments = (db, callback) => {
+      // access the rating collection for the given restaurant option
+      const collection = db.collection('rate' + option);
+
+      collection.find().toArray((err, ratingDocs) => {
+        assert.equal(err, null);
+        callback(ratingDocs);
+      });
+    };
+    
+    findDocuments(db, (ratingDocs) => {
+      //find average of all the ratings and print it
+      var average = 0;
+      for (var i = 0; i < ratingDocs.length; i++) {
+        average = average + parseInt(ratingDocs[i].rating);
+      };
+      average = average / ratingDocs.length;
+      console.log("The average rating of this restaurant is: " + average);
+      client.close();
+    });
+  })
+
+  //get reviews from mongodb and print it
   MongoClient.connect(mongodbUrl, (err, client) => {
     assert.equal(null, err);
     const db = client.db(dbName);
@@ -188,11 +215,19 @@ function hoverIO(docs, optionNumber) {
       console.log("Here are the latest 10 reviews of " + option);
       for (var i = 0; i < reviewdocs.length && i < 10; i++) {
         console.log("Username: " + reviewdocs[i].username);
+
+        // error handling to deal with documents that don't have creation time (smh)
+        if (reviewdocs[i].creationTime) {
         console.log("Reviewed on: " + reviewdocs[i].creationTime.toUTCString());
+        }
+        else {
+          console.log("Reviewed on: unknown");
+        };
         console.log("Review: \n" + reviewdocs[i].review + "\n\n");
       };
 
       module.exports.home(docs);
+      client.close();
     });
   });
 };
