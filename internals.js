@@ -1,3 +1,5 @@
+'use strict';
+
 var prompt = require('prompt');
 
 // mongodb init
@@ -27,8 +29,7 @@ module.exports.home = (docs) => {
     }
 
     else if (result.entering === 'hover') {
-      console.log("This feature is under dev");
-      module.exports.home(docs);
+      hover(docs);
     }
 
     else {
@@ -117,5 +118,82 @@ function reviewIO(docs, optionNumber) {
         });
       });
     };
+  });
+};
+
+// hover CLI
+function hover (docs) {
+  console.log("Please select a restaurant to hover from the below list:");
+  console.log("1. Rockk Onn");
+  console.log("2. Food of Heaven");
+  console.log("3. Aroma");
+  console.log("4. Feel It");
+  console.log("5. KhanaBot Nights");
+  console.log("Please enter the option number of the restaurant you want to hover. Or 'back' to go to the previous menu.");
+  prompt.get(["hoverOption"], (err, result) => {
+    if (result.hoverOption === 'back') {
+      module.exports.home(docs);
+    }
+    else if (parseInt(result.hoverOption) >= 1 && parseInt(result.hoverOption) <= 5) {
+      hoverIO(docs, parseInt(result.hoverOption));
+    }
+    else {
+      console.log("Invalid input, please try again");
+      hover(docs);
+    }
+  })
+};
+
+// hover IO
+function hoverIO(docs, optionNumber) {
+  var option = "test";
+  if(optionNumber === 1) {
+    option = 'rockkonn';
+  }
+  else if (optionNumber === 2) {
+    option = 'foodofheaven';
+  }
+  else if (optionNumber === 3) {
+    option = 'aroma';
+  }
+  else if (optionNumber === 4) {
+    option = 'feelit';
+  }
+  else if (optionNumber === 5) {
+    option = 'khanabotnights'
+  }
+  else {
+    console.log ("optionNumber out of range, please debug");
+    process.exit();
+  }
+
+  //mongodb query
+  MongoClient.connect(mongodbUrl, (err, client) => {
+    assert.equal(null, err);
+    const db = client.db(dbName);
+
+    const findDocuments = (db, callback) => {
+      const collection = db.collection(option);
+      collection.find().toArray((err, reviewdocs) => {
+        assert.equal(err, null);
+        callback(reviewdocs);
+      });
+    };
+    findDocuments(db, (reviewdocs) => {
+      //sort array of review docs by time stamp, descending order
+      reviewdocs.sort((a, b) => {
+        return Date.parse(b.creationTime) - Date.parse(a.creationTime);
+      });
+
+      // print latest 10 reviews
+      console.log("Here are the latest 10 reviews of " + option);
+      for (var i = 0; i < reviewdocs.length && i < 10; i++) {
+        console.log("Username: " + reviewdocs[i].username);
+        console.log("Reviewed on: " + reviewdocs[i].creationTime.toUTCString());
+        console.log("Review: \n" + reviewdocs[i].review + "\n\n");
+      };
+
+      module.exports.home(docs);
+    });
   });
 };
