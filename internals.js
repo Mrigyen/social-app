@@ -24,8 +24,7 @@ module.exports.home = (docs) => {
     }
 
     else if (result.entering === 'rate') {
-      console.log("This feature is under dev");
-      module.exports.home(docs);
+      rate(docs);
     }
 
     else if (result.entering === 'hover') {
@@ -52,7 +51,7 @@ function review (docs) {
     if (result.reviewOption === 'back') {
       module.exports.home(docs);
     }
-    else if (parseInt(result.reviewOption) >= 1 && parseInt(result.reviewOption) <= 5) {
+    else if (parseInt(result.reviewOption) >= 1 && parseInt(result.reviewOption) <= 5 && (result.reviewOption % 1 === 0)) {
       reviewIO(docs, parseInt(result.reviewOption));
     }
     else {
@@ -134,7 +133,7 @@ function hover (docs) {
     if (result.hoverOption === 'back') {
       module.exports.home(docs);
     }
-    else if (parseInt(result.hoverOption) >= 1 && parseInt(result.hoverOption) <= 5) {
+    else if (parseInt(result.hoverOption) >= 1 && parseInt(result.hoverOption) <= 5 && (result.hoverOption % 1 === 0)) {
       hoverIO(docs, parseInt(result.hoverOption));
     }
     else {
@@ -195,5 +194,88 @@ function hoverIO(docs, optionNumber) {
 
       module.exports.home(docs);
     });
+  });
+};
+
+// rate CLI
+function rate (docs) {
+  console.log("Please select a restaurant to rate from the below list:");
+  console.log("1. Rockk Onn");
+  console.log("2. Food of Heaven");
+  console.log("3. Aroma");
+  console.log("4. Feel It");
+  console.log("5. KhanaBot Nights");
+  console.log("Please enter the option number of the restaurant you want to rate. Or 'back' to go to the previous menu.");
+  prompt.get(["rateOption"], (err, result) => {
+    if (result.rateOption === 'back') {
+      module.exports.home(docs);
+    }
+    else if (parseInt(result.rateOption) >= 1 && parseInt(result.rateOption) <= 5 && (result.rateOption % 1 === 0)) {
+      rateIO(docs, parseInt(result.rateOption));
+    }
+    else {
+      console.log("Invalid input, please try again");
+      rate(docs);
+    }
+  })
+};
+
+// rate I/O
+function rateIO(docs, optionNumber) {
+  var option = "test";
+  if(optionNumber === 1) {
+    option = 'raterockkonn';
+  }
+  else if (optionNumber === 2) {
+    option = 'ratefoodofheaven';
+  }
+  else if (optionNumber === 3) {
+    option = 'ratearoma';
+  }
+  else if (optionNumber === 4) {
+    option = 'ratefeelit';
+  }
+  else if (optionNumber === 5) {
+    option = 'ratekhanabotnights'
+  }
+  else {
+    console.log ("optionNumber out of range, please debug");
+    process.exit();
+  }
+
+  console.log(docs[0].username + ", please enter your rating below and press enter to submit. It should be an integer, ranging from 1 to 5, inclusive.");
+  prompt.get(["rating"], (err, result) => {
+    if (parseInt(result.rating) >= 1 && parseInt(result.rating) <= 5 && (parseFloat(result.rating) % 1 == 0)) {
+      // mongodb submission
+      MongoClient.connect(mongodbUrl, (err, client) => {
+        assert.equal(null, err);
+        const db = client.db(dbName);
+
+        // submission function
+        const submitReview = (db, callback) => {
+          const collection = db.collection(option);
+          collection.insertMany([{
+            username: docs[0].username,
+            creationTime: new Date(),
+            rating: result.rating
+          }], (err, submitresult) => {
+            console.log("Successfully submitted rating.");
+            callback(submitresult);
+          });
+        };
+
+        submitReview(db, (ratingDocument) => {
+          console.log("here is the object of the rating:");
+          console.log(ratingDocument);
+          module.exports.home(docs);
+          client.close();
+        });
+      });
+    }
+
+    else {
+      console.log("Please write an actual rating.");
+      rateIO(docs, optionNumber);
+    };
   });
 };
